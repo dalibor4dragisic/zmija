@@ -1,0 +1,8 @@
+E:\Projekti2\Zmija\Zmija\bin\Release\Zmija.exe
+E:\Projekti2\Zmija\Zmija\bin\Release\Zmija.pdb
+E:\Projekti2\Zmija\Zmija\obj\Release\ResolveAssemblyReference.cache
+E:\Projekti2\Zmija\Zmija\obj\Release\Zmija.Form1.resources
+E:\Projekti2\Zmija\Zmija\obj\Release\Zmija.Properties.Resources.resources
+E:\Projekti2\Zmija\Zmija\obj\Release\Zmija.csproj.GenerateResource.Cache
+E:\Projekti2\Zmija\Zmija\obj\Release\Zmija.exe
+E:\Projekti2\Zmija\Zmija\obj\Release\Zmija.pdb
