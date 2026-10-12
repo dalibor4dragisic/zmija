@@ -1,8 +1,0 @@
-E:\Projekti2\Zmija\Zmija\bin\Debug\Zmija.exe
-E:\Projekti2\Zmija\Zmija\bin\Debug\Zmija.pdb
-E:\Projekti2\Zmija\Zmija\obj\Debug\ResolveAssemblyReference.cache
-E:\Projekti2\Zmija\Zmija\obj\Debug\Zmija.Form1.resources
-E:\Projekti2\Zmija\Zmija\obj\Debug\Zmija.Properties.Resources.resources
-E:\Projekti2\Zmija\Zmija\obj\Debug\Zmija.csproj.GenerateResource.Cache
-E:\Projekti2\Zmija\Zmija\obj\Debug\Zmija.exe
-E:\Projekti2\Zmija\Zmija\obj\Debug\Zmija.pdb
