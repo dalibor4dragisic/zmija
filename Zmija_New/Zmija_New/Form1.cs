@@ -704,7 +704,7 @@ namespace Zmija_New
                 int x = rnd.Next(0, columns - 1);
                 int y = rnd.Next(0, rows - 1);
 
-                while (world[y, x] == 0)
+                while (SnakeSegments.Any(segment => segment.currentPanel.X == x && segment.currentPanel.Y == y))
                 {
                     x = rnd.Next(0, columns - 1);
                     y = rnd.Next(0, rows - 1);
@@ -925,34 +925,22 @@ namespace Zmija_New
 
             if (segmentHead.currentPanel.IsFood)
             {
+                SnakeSegment segmentTail = GetSnakeTail();
+
+                // New segment takes the field the tail has just left
                 SnakeSegment segment = new SnakeSegment();
-
-                if (movingDirection == MovingDirection.Down)
-                {
-                    segment.currentPanel = segmentHead.currentPanel.Bottom;
-                }
-                else if (movingDirection == MovingDirection.Up)
-                {
-                    segment.currentPanel = segmentHead.currentPanel.Top;
-                }
-                else if (movingDirection == MovingDirection.Left)
-                {
-                    segment.currentPanel = segmentHead.currentPanel.Left;
-                }
-                else if (movingDirection == MovingDirection.Right)
-                {
-                    segment.currentPanel = segmentHead.currentPanel.Right;
-                }
-
-                segment.currentPanel.BackColor = snakeColor;
-                segment.Child = segmentHead;
-                segmentHead.Parent = segment;
-
+                segment.currentPanel = segmentTail.oldPanel;
                 segment.oldPanel = segment.currentPanel;
+                segment.currentPanel.BackColor = snakeColor;
+
+                segment.Parent = segmentTail;
+                segmentTail.Child = segment;
 
                 segmentHead.currentPanel.IsFood = false;
 
-                SnakeSegments.Insert(0, segment);
+                SnakeSegments.Add(segment);
+
+                retValue = true;
 
                 Score += 1;
                 if (null != ScoreChanged)
