@@ -1,11 +1,9 @@
-using System.Data.Common;
+﻿using System.Data.Common;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Net.Http.Headers;
 using System.Windows.Forms;
-using AStar;
-using AStar.Options;
 
 namespace Zmija_New
 {
@@ -40,6 +38,9 @@ namespace Zmija_New
 
         bool spacePressed = false;
 
+        GameMode gameMode = GameMode.Auto;
+        IAutopilot autopilot = null;
+
         #endregion //Fields
 
         public Form1()
@@ -51,6 +52,14 @@ namespace Zmija_New
             MapCustomPanels();
 
             CreateSnake();
+
+            rucnoToolStripMenuItem.Tag = GameMode.Manual;
+            astarToolStripMenuItem.Tag = GameMode.AStar;
+            automatskoToolStripMenuItem.Tag = GameMode.Auto;
+            hamiltonToolStripMenuItem.Tag = GameMode.Hamilton;
+            hibridToolStripMenuItem.Tag = GameMode.Hybrid;
+
+            SetGameMode(gameMode);
 
             timer.Tick += new EventHandler(timer_Tick);
 
@@ -69,6 +78,13 @@ namespace Zmija_New
 
         private void foodTimer_Tick(object sender, EventArgs e)
         {
+            // No free field left for the food
+            if (IsBoardFull())
+            {
+                ShowBoardFull();
+                return;
+            }
+
             CustomPanel currentFood = GetCurrentFood();
             CustomPanel foodForInsert = FoodForInsert();
 
@@ -92,18 +108,26 @@ namespace Zmija_New
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            if (key == Keys.Left || key == Keys.Right || key == Keys.Up || key == Keys.Down)
+            if (snake.CollisionDetected)
             {
-                if (!snake.CollisionDetected)
-                {
-                    //snake.MoveSnake(key);
-                    
-                }
+                return;
             }
 
-            if (!snake.CollisionDetected)
+            if (gameMode == GameMode.Manual)
             {
-                snake.MoveSnakeAuto(fields, columns, rows);
+                if (key == Keys.Left || key == Keys.Right || key == Keys.Up || key == Keys.Down)
+                {
+                    snake.MoveSnake(key);
+                }
+            }
+            else
+            {
+                snake.MoveSnakeAuto(fields, autopilot);
+            }
+
+            if (snake.CollisionDetected)
+            {
+                ShowGameOver();
             }
         }
 
@@ -156,6 +180,12 @@ namespace Zmija_New
         private void snake_ScoreChanged(int score)
         {
             this.Text = title + " - " + score.ToString();
+
+            if (IsBoardFull())
+            {
+                ShowBoardFull();
+                return;
+            }
 
             if (score == foodLimit)
             {
@@ -245,12 +275,41 @@ namespace Zmija_New
             int column = -1;
 
             Random rnd1 = new Random();
-            row = rnd1.Next(0, rows - 1);
+            row = rnd1.Next(0, rows);
 
             Random rnd2 = new Random();
-            column = rnd2.Next(0, columns - 1);
+            column = rnd2.Next(0, columns);
 
             return fields[row][column];
+        }
+
+        private bool IsBoardFull()
+        {
+            return snake.SnakeSegments.Count >= rows * columns;
+        }
+
+        private void ShowGameOver()
+        {
+            StopGame();
+
+            DialogResult res = MessageBox.Show("Zmija je udarila u samu sebe.\nRezultat: " + snake.Score + "\nZa novu igru pritisnite Y.", "KRAJ IGRE", MessageBoxButtons.YesNo);
+
+            if (res == DialogResult.Yes)
+            {
+                StartNewGame();
+            }
+        }
+
+        private void ShowBoardFull()
+        {
+            StopGame();
+
+            DialogResult res = MessageBox.Show("Cestitam, zmija je popunila celu tablu!\nZa novu igru pritisnite Y.", "POBEDA", MessageBoxButtons.YesNo);
+
+            if (res == DialogResult.Yes)
+            {
+                StartNewGame();
+            }
         }
 
         private void StartNewGame()
@@ -445,7 +504,63 @@ namespace Zmija_New
 
         private void pomocToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Za pokretanje zmije upotrebljavaju se kursori.\nCilj je pojesti 30 komada hrane.\nPauza je SPACE.\nPuno srece u igranju.");
+            MessageBox.Show("Rezim igre se bira u meniju Rezim.\nU rucnom rezimu zmija se pokrece kursorima, u ostalim se krece sama.\nCilj je pojesti 30 komada hrane, a igra se moze i nastaviti.\nPauza je SPACE.\nPuno srece u igranju.");
+        }
+
+        private void rezimToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SetGameMode((GameMode)((ToolStripMenuItem)sender).Tag);
+        }
+
+        private void SetGameMode(GameMode mode)
+        {
+            gameMode = mode;
+            autopilot = CreateAutopilot(mode);
+
+            foreach (ToolStripMenuItem item in rezimToolStripMenuItem.DropDownItems)
+            {
+                item.Checked = (GameMode)item.Tag == mode;
+            }
+
+            if (mode == GameMode.Manual)
+            {
+                // Continue in the direction the snake is already moving
+                key = KeyForDirection(snake.movingDirection);
+            }
+        }
+
+        private static IAutopilot CreateAutopilot(GameMode mode)
+        {
+            switch (mode)
+            {
+                case GameMode.AStar:
+                    return new AStarAutopilot(columns, rows);
+                case GameMode.Auto:
+                    return new Autopilot(columns, rows);
+                case GameMode.Hamilton:
+                    return new HamiltonAutopilot(columns, rows);
+                case GameMode.Hybrid:
+                    return new HybridAutopilot(columns, rows);
+                default:
+                    return null;
+            }
+        }
+
+        private static Keys KeyForDirection(Snake.MovingDirection direction)
+        {
+            switch (direction)
+            {
+                case Snake.MovingDirection.Left:
+                    return Keys.Left;
+                case Snake.MovingDirection.Right:
+                    return Keys.Right;
+                case Snake.MovingDirection.Up:
+                    return Keys.Up;
+                case Snake.MovingDirection.Down:
+                    return Keys.Down;
+                default:
+                    return Keys.Enter;
+            }
         }
     }
 
@@ -558,132 +673,7 @@ namespace Zmija_New
             }
         }
 
-        private WorldGrid world;
-
-        private static WorldGrid CreateGridInitializedToOpen(int height, int width, List<SnakeSegment> snakeSegments, CustomPanel destination)
-        {
-            var grid = new WorldGrid(height, width);
-
-            var markedPoints = new HashSet<(int row, int column)>();
-            var snakePoints = new HashSet<(int y, int x)>();
-
-            for (var row = 0; row < grid.Height; row++)
-            {
-                for (var column = 0; column < grid.Width; column++)
-                {
-                    var segment = snakeSegments.FirstOrDefault(segment =>
-                        segment.currentPanel.X == column && segment.currentPanel.Y == row);
-
-                    if (segment != null)
-                    {
-                        grid[row, column] = 0;
-
-                        snakePoints.Add((row, column));
-                    }
-                    else
-                    {
-                        grid[row, column] = 1;
-                    }
-
-                    if (!destination.IsFood)
-                    {
-                        continue;
-                    }
-
-                    if (destination.X == 0 && column == destination.X + 1 && row == destination.Y)
-                    {
-                        markedPoints.Add((row, column));
-                    }
-
-                    if (destination.X == width - 1 && column == destination.X - 1 && row == destination.Y)
-                    {
-                        markedPoints.Add((row, column));
-                    }
-
-                    if (destination.Y == 0 && row == destination.Y + 1 && column == destination.X)
-                    {
-                        markedPoints.Add((row, column));
-                    }
-
-                    if (destination.Y == height - 1 && row == destination.Y - 1 && column == destination.X)
-                    {
-                        //grid[row, column] = 0;
-
-                        markedPoints.Add((row, column));
-                    }
-
-                    //if (food.X == row && food.Y == column)
-                    //{
-                    //    if (column + 1 == food.X && row == food.Y
-                    //        && row + 1 < width)
-                    //    {
-                    //        markedPoints.Add((row + 1, column));
-                    //    }
-
-                    //    if (column - 1 == food.X && row == food.Y
-                    //        && row - 1 > 0)
-                    //    {
-                    //        markedPoints.Add((row - 1, column));
-                    //    }
-
-                    //    if (row + 1 == food.Y && column == food.Y
-                    //        && column + 1 < height)
-                    //    {
-                    //        markedPoints.Add((row, column + 1));
-                    //    }
-
-                    //    if (row - 1 == food.Y && column == food.Y
-                    //        && column - 1 > 0)
-                    //    {
-                    //        markedPoints.Add((row, column - 1));
-                    //    }
-
-                    //}
-                }
-            }
-
-            if (!destination.IsFood)
-            {
-                return grid;
-            }
-
-            foreach (var snakePoint in snakePoints)
-            {
-                if (snakePoint.x + 1 == destination.X && snakePoint.y == destination.Y
-                                             && destination.X + 1 < width)
-                {
-                    markedPoints.Add((destination.Y, destination.X + 1));
-                }
-
-                if (snakePoint.x - 1 == destination.X && snakePoint.y == destination.Y
-                                               && destination.X - 1 > 0)
-                {
-                    markedPoints.Add((destination.Y, destination.X - 1));
-                }
-
-                if (snakePoint.y + 1 == destination.Y && snakePoint.x == destination.X
-                                               && destination.Y + 1 < height)
-                {
-                    markedPoints.Add((destination.Y + 1, destination.X));
-                }
-
-                if (snakePoint.y - 1 == destination.Y && snakePoint.x == destination.X
-                                               && destination.Y - 1 > 0)
-                {
-                    markedPoints.Add((destination.Y - 1, destination.X));
-                }
-            }
-
-            foreach (var markedPoint in markedPoints)
-            {
-                grid[markedPoint.row, markedPoint.column] = 0;
-            }
-
-            return grid;
-        }
-        public void MoveSnakeAuto(List<List<CustomPanel>> fields,
-            int columns,
-            int rows)
+        public void MoveSnakeAuto(List<List<CustomPanel>> fields, IAutopilot autopilot)
         {
             SnakeSegment segmentHead = this.GetSnakeHead();
 
@@ -692,138 +682,35 @@ namespace Zmija_New
             var food = fields.SelectMany(fieldEntry => fieldEntry).FirstOrDefault(field => field.IsFood);
 
             Debug.WriteLine($"HEAD X: {segmentHead.currentPanel.X}, Y: {segmentHead.currentPanel.Y}");
-            
 
-            Random rnd = new Random();
+            List<Point> body = SnakeSegments
+                .Select(segment => new Point(segment.currentPanel.X, segment.currentPanel.Y))
+                .ToList();
 
-            
+            Point? foodPoint = food == null ? null : new Point(food.X, food.Y);
 
-            if (food == null)
+            movingDirection = autopilot.NextDirection(body, foodPoint, movingDirection);
+
+            if (movingDirection == MovingDirection.Stop)
             {
-                //Get rnd food, not in collision with snake
-                int x = rnd.Next(0, columns - 1);
-                int y = rnd.Next(0, rows - 1);
-
-                while (SnakeSegments.Any(segment => segment.currentPanel.X == x && segment.currentPanel.Y == y))
-                {
-                    x = rnd.Next(0, columns - 1);
-                    y = rnd.Next(0, rows - 1);
-                }
-
-                CustomPanel rndPanel = new CustomPanel()
-                {
-                    Y = y,
-                    X = x
-                };
-
-                food = rndPanel;
+                return;
             }
 
-            world = CreateGridInitializedToOpen(rows, columns, SnakeSegments, food);
-
-            var pathfinderOptions = new PathFinderOptions { UseDiagonals = false };
-            var pathFinder = new PathFinder(world, pathfinderOptions);
-
-            Debug.WriteLine($"FOOD X: {(food?.X).GetValueOrDefault()}, Y: {(food?.Y).GetValueOrDefault()}");
-
-            //var path = pathFinder.FindPath(new Position(segmentHead.currentPanel.Y, segmentHead.currentPanel.X ), 
-            //    new Position((food?.Y).GetValueOrDefault(rnd.Next(0, rows - 1)), (food?.X).GetValueOrDefault(rnd.Next(0, columns - 1))));
-
-            //foreach (var point in path)
-            //{
-            //    Debug.WriteLine($">>PATH<< X: {point.Column}, Y: {point.Row}");
-            //}
-
-
-            //var firstPath = path.FirstOrDefault();
-            //if (firstPath.Column == segmentHead.currentPanel.X && firstPath.Row == segmentHead.currentPanel.Y
-            //    && path.Length > 1)
-            //{
-            //    firstPath = path.First(p => p != firstPath);
-            //}
-            //else
-            //{
-            //    //firstPath = new Position(rnd.Next(0, rows - 1), rnd.Next(0, columns - 1));
-            //    //Get rnd food, not in collision with snake
-            //    int x = rnd.Next(0, columns - 1);
-            //    int y = rnd.Next(0, rows - 1);
-
-            //    while (world[y, x] == 0)
-            //    {
-            //        x = rnd.Next(0, columns - 1);
-            //        y = rnd.Next(0, rows - 1);
-
-            //        path = pathFinder.FindPath(new Position(segmentHead.currentPanel.Y, segmentHead.currentPanel.X),
-            //            new Position(y, x));
-            //    }
-
-            //    firstPath = new Position(y, x);
-            //}
-
-            var firstPath = GetNextPosition(segmentHead, food, pathFinder, columns, rows);
-
-
-            //CustomPanel tempPanel = null;
-
-            //if (key == Keys.Right)
-            if (segmentHead.currentPanel.Y == firstPath.Row 
-                && segmentHead.currentPanel.X < firstPath.Column)
+            if (movingDirection == MovingDirection.Right)
             {
-                //if (movingDirection == MovingDirection.Left)
-                //{
-                //    return;
-                //}
-
                 this.RefreshRelations(segmentHead.currentPanel.Right);
-
-                movingDirection = MovingDirection.Right;
-
-                //segmentHead.currentPanel = segmentHead.currentPanel.Right;
             }
-            //else if (key == Keys.Left)
-            else if (segmentHead.currentPanel.Y == firstPath.Row
-                     && segmentHead.currentPanel.X > firstPath.Column)
+            else if (movingDirection == MovingDirection.Left)
             {
-                //if (movingDirection == MovingDirection.Right)
-                //{
-                //    return;
-                //}
-
                 this.RefreshRelations(segmentHead.currentPanel.Left);
-
-                movingDirection = MovingDirection.Left;
-
-                //segmentHead.currentPanel = segmentHead.currentPanel.Left;
             }
-            //else if (key == Keys.Up)
-            else if (segmentHead.currentPanel.X == firstPath.Column
-                     && segmentHead.currentPanel.Y > firstPath.Row)
+            else if (movingDirection == MovingDirection.Up)
             {
-                //if (movingDirection == MovingDirection.Down)
-                //{
-                //    return;
-                //}
-
                 this.RefreshRelations(segmentHead.currentPanel.Top);
-
-                movingDirection = MovingDirection.Up;
-
-                //segmentHead.currentPanel = segmentHead.currentPanel.Top;
             }
-            //else if (key == Keys.Down)
-            else if (segmentHead.currentPanel.X == firstPath.Column
-                     && segmentHead.currentPanel.Y < firstPath.Row)
+            else if (movingDirection == MovingDirection.Down)
             {
-                //if (movingDirection == MovingDirection.Up)
-                //{
-                //    return;
-                //}
-
                 this.RefreshRelations(segmentHead.currentPanel.Bottom);
-
-                movingDirection = MovingDirection.Down;
-
-                //segmentHead.currentPanel = segmentHead.currentPanel.Bottom;
             }
 
             CollisionDetected = DetectCollision(segmentHead);
@@ -843,44 +730,6 @@ namespace Zmija_New
             {
                 CollisionDetected = DetectCollision(GetSnakeHead());
             }
-        }
-
-        private Position GetNextPosition(SnakeSegment segmentHead, CustomPanel food, PathFinder pathFinder, int columns, int rows)
-        {
-            Random rnd = new Random();
-
-            var path = pathFinder.FindPath(new Position(segmentHead.currentPanel.Y, segmentHead.currentPanel.X),
-                new Position(food.Y, food.X));
-
-            foreach (var point in path)
-            {
-                Debug.WriteLine($">>PATH<< X: {point.Column}, Y: {point.Row}");
-            }
-
-            var firstPath = path.FirstOrDefault();
-            if (firstPath.Column == segmentHead.currentPanel.X 
-                && firstPath.Row == segmentHead.currentPanel.Y
-                && path.Length > 1)
-            {
-                firstPath = path.First(p => p != firstPath);
-            }
-            else
-            {
-                //firstPath = new Position(rnd.Next(0, rows - 1), rnd.Next(0, columns - 1));
-                //Get rnd food, not in collision with snake
-                int x = rnd.Next(0, columns - 1);
-                int y = rnd.Next(0, rows - 1);
-
-                while (world[y, x] == 0)
-                {
-                    x = rnd.Next(0, columns - 1);
-                    y = rnd.Next(0, rows - 1);
-                }
-
-                firstPath = GetNextPosition(segmentHead, new CustomPanel(){ Y = y, X = x}, pathFinder, columns, rows);
-            }
-
-            return firstPath;
         }
 
         private bool DetectCollision(SnakeSegment segmentHead)

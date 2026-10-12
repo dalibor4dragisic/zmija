@@ -39,6 +39,12 @@
             this.novaIgraToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pokreniNovuIgruToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pomocToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.rezimToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.rucnoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.astarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.automatskoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.hamiltonToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.hibridToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -53,7 +59,8 @@
             // menuStrip1
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.novaIgraToolStripMenuItem});
+            this.novaIgraToolStripMenuItem,
+            this.rezimToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(631, 24);
@@ -83,6 +90,53 @@
             this.pomocToolStripMenuItem.Text = "Uputstvo";
             this.pomocToolStripMenuItem.Click += new System.EventHandler(this.pomocToolStripMenuItem_Click);
             // 
+            // rezimToolStripMenuItem
+            // 
+            this.rezimToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.rucnoToolStripMenuItem,
+            this.astarToolStripMenuItem,
+            this.automatskoToolStripMenuItem,
+            this.hamiltonToolStripMenuItem,
+            this.hibridToolStripMenuItem});
+            this.rezimToolStripMenuItem.Name = "rezimToolStripMenuItem";
+            this.rezimToolStripMenuItem.Size = new System.Drawing.Size(52, 20);
+            this.rezimToolStripMenuItem.Text = "Režim";
+            // 
+            // rucnoToolStripMenuItem
+            // 
+            this.rucnoToolStripMenuItem.Name = "rucnoToolStripMenuItem";
+            this.rucnoToolStripMenuItem.Size = new System.Drawing.Size(240, 22);
+            this.rucnoToolStripMenuItem.Text = "Ručno igranje";
+            this.rucnoToolStripMenuItem.Click += new System.EventHandler(this.rezimToolStripMenuItem_Click);
+            // 
+            // astarToolStripMenuItem
+            // 
+            this.astarToolStripMenuItem.Name = "astarToolStripMenuItem";
+            this.astarToolStripMenuItem.Size = new System.Drawing.Size(240, 22);
+            this.astarToolStripMenuItem.Text = "Automatsko - A*";
+            this.astarToolStripMenuItem.Click += new System.EventHandler(this.rezimToolStripMenuItem_Click);
+            // 
+            // automatskoToolStripMenuItem
+            // 
+            this.automatskoToolStripMenuItem.Name = "automatskoToolStripMenuItem";
+            this.automatskoToolStripMenuItem.Size = new System.Drawing.Size(240, 22);
+            this.automatskoToolStripMenuItem.Text = "Automatsko";
+            this.automatskoToolStripMenuItem.Click += new System.EventHandler(this.rezimToolStripMenuItem_Click);
+            // 
+            // hamiltonToolStripMenuItem
+            // 
+            this.hamiltonToolStripMenuItem.Name = "hamiltonToolStripMenuItem";
+            this.hamiltonToolStripMenuItem.Size = new System.Drawing.Size(240, 22);
+            this.hamiltonToolStripMenuItem.Text = "Automatsko - Hamiltonov ciklus";
+            this.hamiltonToolStripMenuItem.Click += new System.EventHandler(this.rezimToolStripMenuItem_Click);
+            // 
+            // hibridToolStripMenuItem
+            // 
+            this.hibridToolStripMenuItem.Name = "hibridToolStripMenuItem";
+            this.hibridToolStripMenuItem.Size = new System.Drawing.Size(240, 22);
+            this.hibridToolStripMenuItem.Text = "Automatsko - hibrid";
+            this.hibridToolStripMenuItem.Click += new System.EventHandler(this.rezimToolStripMenuItem_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -106,5 +160,11 @@
         private System.Windows.Forms.ToolStripMenuItem novaIgraToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pokreniNovuIgruToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pomocToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem rezimToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem rucnoToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem astarToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem automatskoToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem hamiltonToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem hibridToolStripMenuItem;
     }
 }
